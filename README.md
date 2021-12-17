@@ -11,7 +11,8 @@ numpy
 scipy
 matplotlib
 h5py
+pillow
 ```
 For torch_optimizer version >0.1.0 the Radam is removed and merged into pytorch>=1.9. We prefer to use the following command
-`!pip3 install torch_optimizer==0.1.0`
+`pip3 install torch_optimizer==0.1.0`
 to guarantee it works.

@@ -1,19 +1,15 @@
+#%%
 import os
-import h5py 
 import numpy as np
-import scipy.io as sio
-from scipy.signal import stft 
-import itertools
-
 import torch
-from torch import nn
-import torch.nn.functional as Func
 import torch.utils.data as Data
 import matplotlib.pyplot as plt
-# from torch.utils.tensorboard import SummaryWriter
+from PIL import Image  # install Pillow
+
+from utils import UNetHalf
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 plt.rcParams['figure.dpi'] = 100
 
-# from unet.unet_model import UNet
 "make the result reproducible"
 torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True
@@ -23,20 +19,15 @@ torch.backends.cudnn.benchmark = False
 """only generate 1-class vj and let it move. Also train only one neural network to see if it could capture
 the patter
 """
-from utils import *
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 opts = {}
 opts['n_epochs'] = 200  
 opts['lr'] = 0.01
 opts['n_batch'] = 64  # batch size
-opts['d_gamma'] = 2 # gamma dimesion 16*16 to 200*200
+opts['d_gamma'] = 16 # gamma dimesion 16*16 to 150*150
 
-#%% 
-from PIL import Image  # install Pillow
 d = Image.open('../data/vj3.png')
 d = np.array(d)
 d = torch.tensor(1-d[...,0]/255).float()
-
 # row 44 has 1, column 47 has 1
 F, T = d.shape
 N = 10000
@@ -70,29 +61,29 @@ for epoch in range(1):
         x = gamma[:,None].cuda().requires_grad_()
         v = v[:,None].cuda()
 
-        # "update gamma"
-        # optim_gamma = torch.optim.SGD([x], lr= opts['lr'])  # every iter the gamma grad is reset
-        # out = model(x.diag_embed())
-        # loss = ((out - v)**2).sum()/opts['n_batch']
-        # optim_gamma.zero_grad()   
-        # loss.backward()
-        # torch.nn.utils.clip_grad_norm_([x], max_norm=500)
-        # optim_gamma.step()
-        # torch.cuda.empty_cache()
+        "update gamma"
+        optim_gamma = torch.optim.SGD([x], lr= opts['lr'])  # every iter the gamma grad is reset
+        out = model(x.diag_embed())
+        loss = ((out - v)**2).sum()/opts['n_batch']
+        optim_gamma.zero_grad()   
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_([x], max_norm=500)
+        optim_gamma.step()
+        torch.cuda.empty_cache()
 
-        # "update model"
-        # for param in model.parameters():
-        #     param.requires_grad_(True)
-        # x.requires_grad_(False)
-        # out = model(x.diag_embed())
-        # loss = ((out - v)**2).sum()/opts['n_batch']
-        # optimizer.zero_grad()   
-        # loss.backward()
-        # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=500)
-        # optimizer.step()
-        # torch.cuda.empty_cache()
+        "update model"
+        for param in model.parameters():
+            param.requires_grad_(True)
+        x.requires_grad_(False)
+        out = model(x.diag_embed())
+        loss = ((out - v)**2).sum()/opts['n_batch']
+        optimizer.zero_grad()   
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=500)
+        optimizer.step()
+        torch.cuda.empty_cache()
 
-        # loss_cv.append(loss.detach().item())
+        loss_cv.append(loss.detach().item())
     
     if epoch%1 ==0:
         plt.figure()

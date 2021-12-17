@@ -149,7 +149,7 @@ class Up_(nn.Module):
         return self.conv(x)
 
 
-class UNetHalf(nn.Module):   # 1 channel, 16*16
+class UNetHalf(nn.Module):   # 1 channel, 16*16 to 150*150
     def __init__(self, n_channels, n_classes, bilinear=False):
         """Only the up part of the unet
 
@@ -191,7 +191,7 @@ class UNetHalf(nn.Module):   # 1 channel, 16*16
         return out
 
 
-class UNetHalf2(nn.Module):
+class UNetHalf2(nn.Module):  # 2*2 to 150*150
     def __init__(self, n_channels, n_classes, bilinear=False):
         """Only the up part of the unet
 
@@ -240,7 +240,7 @@ class UNetHalf2(nn.Module):
         return out
 
 
-class UNetHalf64_4(nn.Module):
+class UNetHalf64_4(nn.Module): # 4*4, 150*150
     def __init__(self, n_channels, n_classes, bilinear=False):
         """Only the up part of the unet
 
@@ -250,11 +250,11 @@ class UNetHalf64_4(nn.Module):
             bilinear (bool, optional): [use interpolation or deconv]. Defaults to False(use deconv).
         """
         super(UNetHalf64_4, self).__init__()
-        self.n_ch = n_channels
+        self.n_ch = 512
         self.n_classes = n_classes
         self.bilinear = bilinear
 
-        self.inc = DoubleConv(self.n_ch, self.n_ch)
+        self.inc = DoubleConv(n_channels, self.n_ch)
         self.up1 = Up_(self.n_ch, self.n_ch//2, bilinear=True)
         self.up2 = Up_(self.n_ch//2, self.n_ch//4, bilinear)
         self.up3 = Up_(self.n_ch//4, self.n_ch//8, bilinear)
